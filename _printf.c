@@ -1,32 +1,51 @@
 #include "main.h"
 
 /**
- * print_rev - writes the str in reverse
- * @arguments: input string
- * @buf: buffer pointer
- * @ibuf: index for buffer pointer
+ * _printf - formatted output conversion and print data.
+ * @format: input string.
+ *
  * Return: number of chars printed.
  */
-int print_rev(va_list arguments, char *buf, unsigned int ibuf)
+int _printf(const char *format, ...)
 {
-	char *str;
-	unsigned int i;
-	int j = 0;
-	char nill[] = "(llun)";
+	unsigned int i = 0, len = 0, ibuf = 0;
+	va_list arguments;
+	int (*function)(va_list, char *, unsigned int);
+	char *buffer;
 
-	str = va_arg(arguments, char *);
-	if (str == NULL)
+	va_start(arguments, format), buffer = malloc(sizeof(char) * 1024);
+	if (!format || !buffer || (format[i] == '%' && !format[i + 1]))
+		return (-1);
+	if (!format[i])
+		return (0);
+	for (i = 0; format && format[i]; i++)
 	{
-		for (i = 0; nill[i]; i++)
-			ibuf = handl_buf(buf, nill[i], ibuf);
-		return (6);
+		if (format[i] == '%')
+		{
+			if (format[i + 1] == '\0')
+			{	print_buf(buffer, ibuf), free(buffer), va_end(arguments);
+				return (-1);
+			}
+			else
+			{	function = get_print_func(format, i + 1);
+				if (function == NULL)
+				{
+					if (format[i + 1] == ' ' && !format[i + 2])
+						return (-1);
+					handl_buf(buffer, format[i], ibuf), len++, i--;
+				}
+				else
+				{
+					len += function(arguments, buffer, ibuf);
+					i += ev_print_func(format, i + 1);
+				}
+			} i++;
+		}
+		else
+			handl_buf(buffer, format[i], ibuf), len++;
+		for (ibuf = len; ibuf > 1024; ibuf -= 1024)
+			;
 	}
-	for (i = 0; str[i]; i++)
-		;
-	j = i - 1;
-	for (; j >= 0; j--)
-	{
-		ibuf = handl_buf(buf, str[j], ibuf);
-	}
-	return (i);
+	print_buf(buffer, ibuf), free(buffer), va_end(arguments);
+	return (len);
 }
